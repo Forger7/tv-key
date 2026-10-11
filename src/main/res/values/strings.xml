@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">TV Key</string>
+    <string name="service_name">TV Key</string>
+    <string name="service_description">Opens a chosen app when the TV button on the remote is pressed. Configured via adb; every other key passes through untouched.</string>
+</resources>
