@@ -56,6 +56,8 @@ adb shell settings put secure accessibility_enabled 1
 
 Slots: `tv.short`, `tv.long`, `home.short`, `home.long`. The broadcast prints
 the stored mapping. Send it without extras to just read the mapping; pass an empty string to clear a slot.
+The empty string has to survive two shells, so quote the whole command:
+`adb shell "am broadcast --include-stopped-packages -a io.github.forger7.tvkey.CONFIGURE -p io.github.forger7.tvkey --es home.short ''"`.
 Apart from the settings screen, only adb can change the mapping: the receiver requires `android.permission.DUMP`,
 which the shell has and regular apps do not.
 
