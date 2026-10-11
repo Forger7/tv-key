@@ -78,8 +78,9 @@ zipalign → apksigner:
 
 ```sh
 ./build.sh            # → build/tv-key.apk, signed with a local debug key
+KEYSTORE=~/.android-keys/tv-key-release.jks ./build.sh   # release key, prompts for its password
 ```
 
 ## License
 
-TBD
+MIT — see [LICENSE](LICENSE).

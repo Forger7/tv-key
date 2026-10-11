@@ -42,16 +42,22 @@ javac --release 11 -Xlint:all -Werror -Xlint:-options \
 (cd build/dex && zip -q -j ../unsigned.apk classes.dex)
 "$BT/zipalign" -f 4 build/unsigned.apk build/aligned.apk
 
-# A local key, never committed: the release key for published builds lives
-# outside the repo and is passed in via KEYSTORE.
-KEYSTORE=${KEYSTORE:-debug.keystore}
-if [ ! -f "$KEYSTORE" ]; then
-  keytool -genkeypair -keystore "$KEYSTORE" -storepass android -keypass android \
-    -alias tvkey -keyalg RSA -keysize 2048 -validity 10000 \
-    -dname "CN=tv-key debug" >/dev/null 2>&1
+# Without KEYSTORE: a local debug key, never committed. With KEYSTORE (the
+# release key, kept outside the repo) apksigner prompts for the password, so
+# it never lands in shell history or the environment.
+if [ -n "${KEYSTORE:-}" ]; then
+  "$BT/apksigner" sign --ks "$KEYSTORE" --ks-key-alias tvkey \
+    --out build/tv-key.apk build/aligned.apk
+else
+  KEYSTORE=debug.keystore
+  if [ ! -f "$KEYSTORE" ]; then
+    keytool -genkeypair -keystore "$KEYSTORE" -storepass android -keypass android \
+      -alias tvkey -keyalg RSA -keysize 2048 -validity 10000 \
+      -dname "CN=tv-key debug" >/dev/null 2>&1
+  fi
+  "$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:android \
+    --out build/tv-key.apk build/aligned.apk
 fi
-"$BT/apksigner" sign --ks "$KEYSTORE" --ks-pass pass:${KS_PASS:-android} \
-  --out build/tv-key.apk build/aligned.apk
 "$BT/apksigner" verify build/tv-key.apk
 
 ls -l build/tv-key.apk
