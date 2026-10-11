@@ -23,18 +23,18 @@ ANDROID_JAR=$SDK/platforms/android-34/android.jar
 export JAVA_HOME=$TOOLCHAIN
 PATH=$TOOLCHAIN/bin:$PATH
 
-rm -rf build && mkdir -p build/res build/classes build/dex
+rm -rf build && mkdir -p build/res build/gen build/classes build/dex
 
 "$BT/aapt2" compile --dir src/main/res -o build/res/res.zip
 "$BT/aapt2" link -o build/unsigned.apk -I "$ANDROID_JAR" \
-  --manifest src/main/AndroidManifest.xml \
+  --manifest src/main/AndroidManifest.xml --java build/gen \
   --min-sdk-version 26 --target-sdk-version 34 \
   --version-code "${VERSION_CODE:-1}" --version-name "${VERSION_NAME:-0.1.0}" \
   build/res/res.zip
 
 javac --release 11 -Xlint:all -Werror -Xlint:-options \
   -classpath "$ANDROID_JAR" -d build/classes \
-  $(find src/main/java -name '*.java')
+  $(find src/main/java build/gen -name '*.java')
 
 "$BT/d8" --release --min-api 26 --lib "$ANDROID_JAR" --output build/dex \
   $(find build/classes -name '*.class')

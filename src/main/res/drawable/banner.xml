@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 16:9 banner for TV launchers: the icon centred on a dark tile. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp" android:height="180dp"
+    android:viewportWidth="320" android:viewportHeight="180">
+    <path android:fillColor="#263238" android:pathData="M0,0h320v180H0z" />
+    <path android:fillColor="#1E88E5"
+        android:pathData="M115,45h90a5,5 0 0 1 5,5v60a5,5 0 0 1 -5,5h-90a5,5 0 0 1 -5,-5V50a5,5 0 0 1 5,-5z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M145,125h30v5h-30z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M137,75h30v-13l20,18 -20,18v-13h-30z" />
+</vector>

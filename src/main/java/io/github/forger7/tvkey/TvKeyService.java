@@ -2,8 +2,6 @@ package io.github.forger7.tvkey;
 
 import android.accessibilityservice.AccessibilityService;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
@@ -13,8 +11,8 @@ import android.view.ViewConfiguration;
 import android.view.accessibility.AccessibilityEvent;
 
 /**
- * Redirects the remote's TV key to a configured app (short press) and
- * optionally to a second app (long press).
+ * Redirects remote keys (TV, Home) to configured apps: one for a short press,
+ * optionally another for a long press.
  *
  * The rule throughout: when in doubt, return false and let the system handle
  * the key as if this service did not exist. An accessibility key filter sees
@@ -23,12 +21,10 @@ import android.view.accessibility.AccessibilityEvent;
 public class TvKeyService extends AccessibilityService {
 
     static final String TAG = "TvKey";
-    static final String PREFS = "mapping";
-    static final String KEY_SHORT = "short";
-    static final String KEY_LONG = "long";
 
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private boolean keyDown;
+    /** Key code we currently own (its DOWN was consumed), or 0. */
+    private int ownedKey;
     private boolean longFired;
     private String pendingLong;
 
@@ -39,69 +35,56 @@ public class TvKeyService extends AccessibilityService {
 
     @Override
     protected boolean onKeyEvent(KeyEvent event) {
-        if (event.getKeyCode() != KeyEvent.KEYCODE_TV) {
+        int code = event.getKeyCode();
+        if (Mapping.prefix(code) == null) {
             return false;
         }
 
         if (event.getAction() == KeyEvent.ACTION_DOWN) {
-            if (keyDown) {
+            if (ownedKey == code) {
                 // Repeat of a key we already own.
                 return true;
             }
-            // With the screen off the system uses the TV key to wake the set;
+            if (ownedKey != 0) {
+                // Another mapped key is still held; keep it simple and let this one through.
+                return false;
+            }
+            // With the screen off the system uses these keys to wake the set;
             // that must keep working.
             PowerManager pm = getSystemService(PowerManager.class);
             if (pm != null && !pm.isInteractive()) {
                 return false;
             }
-            String shortTarget = prefs().getString(KEY_SHORT, null);
-            if (launchIntent(shortTarget) == null) {
+            if (Mapping.launchIntent(this, Mapping.get(this, Mapping.slot(code, false))) == null) {
                 // Target unset or uninstalled: the key behaves as stock.
                 return false;
             }
-            keyDown = true;
+            ownedKey = code;
             longFired = false;
-            pendingLong = prefs().getString(KEY_LONG, null);
-            if (launchIntent(pendingLong) != null) {
+            pendingLong = Mapping.get(this, Mapping.slot(code, true));
+            if (Mapping.launchIntent(this, pendingLong) != null) {
                 handler.postDelayed(longPress, ViewConfiguration.getLongPressTimeout());
             }
             return true;
         }
 
         if (event.getAction() == KeyEvent.ACTION_UP) {
-            if (!keyDown) {
+            if (ownedKey != code) {
                 // We passed the DOWN through, so the UP must follow it.
                 return false;
             }
-            keyDown = false;
+            ownedKey = 0;
             handler.removeCallbacks(longPress);
             if (!longFired) {
-                launch(prefs().getString(KEY_SHORT, null));
+                launch(Mapping.get(this, Mapping.slot(code, false)));
             }
             return true;
         }
-        return keyDown;
-    }
-
-    private SharedPreferences prefs() {
-        return getSharedPreferences(PREFS, MODE_PRIVATE);
-    }
-
-    private Intent launchIntent(String pkg) {
-        if (pkg == null || pkg.isEmpty()) {
-            return null;
-        }
-        PackageManager pm = getPackageManager();
-        // Leanback first: several TV apps only declare a LEANBACK_LAUNCHER entry.
-        Intent intent = pm.getLeanbackLaunchIntentForPackage(pkg);
-        if (intent == null) {
-            intent = pm.getLaunchIntentForPackage(pkg);
-        }
-        return intent;
+        return ownedKey == code;
     }
 
     private void launch(String pkg) {
-        Intent intent = launchIntent(pkg);
+        Intent intent = Mapping.launchIntent(this, pkg);
         if (intent == null) {
             Log.w(TAG, "no launch intent for " + pkg);
             return;

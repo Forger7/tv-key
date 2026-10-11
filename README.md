@@ -1,11 +1,12 @@
 # TV Key
 
-Remap the **TV button** on an Android TV remote to an app of your choice — in a
-12 KB APK that uses about **4 MB of RAM**, has no UI, no permissions beyond
-what it needs, and no dependencies.
+Remap the **TV** and **Home** buttons on an Android TV remote to apps of your choice — in a
+21 KB APK whose background service uses about **4 MB of RAM**, with no
+dependencies and no permissions beyond what it needs.
 
-- **Short press** → app A (e.g. an IPTV app)
+- **Short press** → app A (e.g. an IPTV app on TV, an alternative launcher on Home)
 - **Long press** → app B (e.g. the stock live-TV app)
+- Pick the apps on the TV in the **TV Key** app, or via adb
 - Screen off, target app missing, or any other key → **passes through untouched**.
   Uninstall the target app and the button simply behaves as stock again.
 
@@ -26,11 +27,16 @@ keys before global-key dispatch.
 
 The service requests no accessibility events and cannot read window content;
 it only filters keys, and returns immediately for every key other than
-`KEYCODE_TV`.
+`KEYCODE_TV` and `KEYCODE_HOME`.
 
 ## Install
 
-Requires adb access to the TV (Developer options → ADB/USB debugging).
+Sideload the APK (adb, or a file manager on the TV), open **TV Key** from the
+app list, enable the service via the button shown there, then pick an app per
+button and press type. The settings screen runs in its own process, so it uses
+no memory once closed.
+
+### Via adb
 
 ```sh
 adb install tv-key.apk
@@ -39,7 +45,7 @@ adb install tv-key.apk
 # unless --include-stopped-packages is given.
 adb shell am broadcast --include-stopped-packages \
   -a io.github.forger7.tvkey.CONFIGURE -p io.github.forger7.tvkey \
-  --es short de.telekom.magentatv.tv --es long com.sony.dtv.tvx
+  --es tv.short de.telekom.magentatv.tv --es tv.long com.sony.dtv.tvx
 
 # Enable the service. This overwrites the list: if
 # `settings get secure enabled_accessibility_services` is not "null",
@@ -48,9 +54,9 @@ adb shell settings put secure enabled_accessibility_services io.github.forger7.t
 adb shell settings put secure accessibility_enabled 1
 ```
 
-The broadcast prints the stored mapping (`data="short=… long=…"`). Send it
-without extras to just read the mapping; pass an empty string to clear a slot.
-Only adb can change the mapping: the receiver requires `android.permission.DUMP`,
+Slots: `tv.short`, `tv.long`, `home.short`, `home.long`. The broadcast prints
+the stored mapping. Send it without extras to just read the mapping; pass an empty string to clear a slot.
+Apart from the settings screen, only adb can change the mapping: the receiver requires `android.permission.DUMP`,
 which the shell has and regular apps do not.
 
 To find package names: `adb shell pm list packages`.

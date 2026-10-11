@@ -2,5 +2,5 @@
 <resources>
     <string name="app_name">TV Key</string>
     <string name="service_name">TV Key</string>
-    <string name="service_description">Opens a chosen app when the TV button on the remote is pressed. Configured via adb; every other key passes through untouched.</string>
+    <string name="service_description">Opens a chosen app when the TV or Home button on the remote is pressed. Every other key passes through untouched.</string>
 </resources>

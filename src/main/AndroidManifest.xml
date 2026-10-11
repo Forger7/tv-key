@@ -10,7 +10,23 @@
 
     <application
         android:label="@string/app_name"
+        android:icon="@drawable/icon"
+        android:banner="@drawable/banner"
         android:allowBackup="false">
+
+        <!-- Own process: the screen's UI memory is freed when it closes instead
+             of staying in the always-running service process. -->
+        <activity
+            android:name=".SettingsActivity"
+            android:process=":settings"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
 
         <service
             android:name=".TvKeyService"
